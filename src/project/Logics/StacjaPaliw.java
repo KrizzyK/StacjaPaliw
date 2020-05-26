@@ -89,8 +89,10 @@ public class StacjaPaliw {
         while(czyOtwarta == false ) czyOtworzyliStacje.await();
 
         iloscKlientow++;
-        Platform.runLater( () -> guiClass.listaKomunikatow.add(0,"Wchodzi: " +  klient.getName() + ". Ilosc klientow w srodku: " + iloscKlientow) );
-        //guiClass.pokazSamochodNaStacji(guiClass.indeksWolnegoMiejscaNaStacji() , klient.getIdKlienta());
+        Platform.runLater( () -> {
+            guiClass.listaKomunikatow.add(0,"Wchodzi: " +  klient.getName() + ". Ilosc klientow w srodku: " + iloscKlientow);
+            guiClass.pokazSamochodNaStacji( klient.getIdKlienta());
+        } );
 
         wjazdNaStacjeLock.unlock();
     }
@@ -98,8 +100,11 @@ public class StacjaPaliw {
         wjazdNaStacjeLock.lock();
 
         iloscKlientow--;
-        Platform.runLater( () -> guiClass.listaKomunikatow.add(0,"Wychodzi: " +  klient.getName() + ". Ilosc klientow w srodku: " + iloscKlientow) );
-        //guiClass.ukryjSamochodNaStacji(guiClass);
+        Platform.runLater( () -> {
+                    guiClass.listaKomunikatow.add(0,"Wychodzi: " +  klient.getName() + ". Ilosc klientow w srodku: " + iloscKlientow);
+                } );
+
+
         czyJestMiejsceNaStacji.signal();
 
         wjazdNaStacjeLock.unlock();
@@ -113,7 +118,7 @@ public class StacjaPaliw {
     // jesli jest wystarczajaco -> wszystko gra
     // return code -> true, jesli zatankowano (cokolwiek), wiec trzeba zaplacic
     // return code -> false, jesli nie zatankowano nic
-    public boolean zatankujSamochod(ZamowienieKlienta zamowienie, String klient) {
+    public boolean zatankujSamochod(ZamowienieKlienta zamowienie, String klient) throws InterruptedException {
         RodzajPaliwa rodzajPaliwa = zamowienie.getRodzajPaliwa() ;
         int ileLitrow = zamowienie.getIleLitrow() ;
         int paliwaNaStacji = iloscPaliwNaStacji.get(rodzajPaliwa);
@@ -128,7 +133,7 @@ public class StacjaPaliw {
             return true;
         }
         iloscPaliwNaStacji.put(rodzajPaliwa, ileZostanieNaStacji ); // paliwa jest wystarczajaco -> tankowanie wszystkiego
-
+        Thread.sleep(5000);
         Platform.runLater( () ->guiClass.listaKomunikatow.add(0, klient + " zatankowal: " + zamowienie+ ", stanPaliw = " + stanPaliwaNaStacji()) );
         return true;
     }
@@ -140,8 +145,11 @@ public class StacjaPaliw {
         while( czyStanowiskoWolne[nrStanowiska] == false )
             czyZwolnionoStanowisko[nrStanowiska].await();
 
-        Platform.runLater( () -> guiClass.listaKomunikatow.add(0,klient.getName() + " rozpoczyna tankowanie przy stanowisku " + nrStanowiska ) );
-        //guiClass.pokazSamochodNaStanowisku(nrStanowiska, klient.getIdKlienta() );
+        Platform.runLater( () -> {
+            guiClass.listaKomunikatow.add(0,klient.getName() + " rozpoczyna tankowanie przy stanowisku " + nrStanowiska );
+            guiClass.ukryjSamochodNaStacji(klient.getIdKlienta() );
+            guiClass.pokazSamochodNaStanowisku(nrStanowiska, klient.getIdKlienta() );
+        });
 
         czyStanowiskoWolne[nrStanowiska] = false;
 
@@ -152,11 +160,17 @@ public class StacjaPaliw {
 
 
 
-    public void opuscStanowisko(int nrStanowiska) {
+    public void opuscStanowisko(int nrStanowiska, Klient klient) {
         stanowiskaLock.lock();
 
         czyStanowiskoWolne[nrStanowiska] = true;
+        Platform.runLater( () ->  guiClass.ukryjSamochodNaStanowisku(nrStanowiska) );
+
+
         czyZwolnionoStanowisko[nrStanowiska].signal();
+        Platform.runLater( () -> {
+            guiClass.pokazSamochodPrzedKasa(klient.getIdKlienta());
+        });
 
         stanowiskaLock.unlock();
     }
@@ -174,23 +188,24 @@ public class StacjaPaliw {
     public void zaplacPrzyKasie(Klient klient) throws InterruptedException {
         kasyLock.lock();
         int indeksZajmowanejKasy = znajdzKase();
+        System.out.println(indeksZajmowanejKasy);
 
-        //guiClass.pokazSamochodPrzedKasa(guiClass.indeksWolnegoMiejscaPrzedKasa(), klient.getIdKlienta());
         while(czyKasaWolna[indeksZajmowanejKasy] == false )
             czyZwolnionoKase[indeksZajmowanejKasy].await();
-
+        Platform.runLater( () -> {
+            guiClass.ukryjSamochodPrzedKasa(klient.getIdKlienta());
+            guiClass.pokazSamochodyPrzyKasie(indeksZajmowanejKasy, klient.getIdKlienta());
+            guiClass.listaKomunikatow.add(0,"Dokonywanie zaplaty przez " + klient.getName()  );
+        });
         czyKasaWolna[indeksZajmowanejKasy] = false;
-        // zwolnienie kolejki
-
-        Platform.runLater( () -> guiClass.listaKomunikatow.add(0,"Dokonywanie zaplaty przez " + klient.getName()  ) );
-        //guiClass.pokazSamochodyPrzyKasie(indeksZajmowanejKasy, klient.getIdKlienta());
 
         Thread.sleep(5000); //////////////////////////////////////////////// not random
 
-        Platform.runLater( () -> guiClass.listaKomunikatow.add(0,"Dokonano zaplaty przez " + klient.getName() ) );
-        //
-
         czyKasaWolna[indeksZajmowanejKasy] = true;
+        Platform.runLater( () -> {
+            guiClass.listaKomunikatow.add(0,"Dokonano zaplaty przez " + klient.getName() );
+            guiClass.ukryjSamochodPrzyKasie(indeksZajmowanejKasy);
+        } );
         czyZwolnionoKase[indeksZajmowanejKasy].signal();
         kasyLock.unlock();
     }
@@ -199,6 +214,7 @@ public class StacjaPaliw {
         for (int i = 0; i < czyKasaWolna.length; i++) {
             if(czyKasaWolna[i]) return i;
         }
+        System.out.println("Wybieram random");
         Random generator = new Random();
         return generator.nextInt( czyKasaWolna.length );
     }

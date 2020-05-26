@@ -22,15 +22,13 @@ public class Klient extends Thread {
         try {
             Random gen = new Random();
             stacjaPaliw.wjazdKlienta( this );
-            Thread.sleep(gen.nextInt(4000)); // to mozna usunac pozniej, no nie...
+            Thread.sleep(gen.nextInt(4000));
 
             nrStanowiska = stacjaPaliw.zajmijStanowisko( zamowienieKlienta.getRodzajPaliwa(), this );
-            //System.out.println(getName() + " zajmuje " + nrStanowiska + ", stan = " + stacjaPaliw.stanStanowisk() );
 
             boolean czyZatankowano = zatankuj();
 
-            stacjaPaliw.opuscStanowisko(nrStanowiska);
-            //System.out.println(getName() + " zwalnia " + nrStanowiska + ", stan = " + stacjaPaliw.stanStanowisk() );
+            stacjaPaliw.opuscStanowisko(nrStanowiska, this);
 
             if(czyZatankowano) idzDoKasy();
 
@@ -44,7 +42,6 @@ public class Klient extends Thread {
     private boolean zatankuj() throws InterruptedException {
         Random gen = new Random();
         boolean czyZatankowano = stacjaPaliw.zatankujSamochod(zamowienieKlienta, getName());
-        //System.out.println(getName() + " zatankowal: " + zamowienieKlienta + ", stanPaliwaNaStacji = " + stacjaPaliw.stanPaliwaNaStacji() );
 
         return czyZatankowano;
     }
