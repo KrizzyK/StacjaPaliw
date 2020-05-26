@@ -7,6 +7,7 @@ public class Klient extends Thread {
     private int idKlienta;
     private ZamowienieKlienta zamowienieKlienta;
     private StacjaPaliw stacjaPaliw;
+    Random gen;
 
 
     public Klient(int idKlienta, StacjaPaliw stacjaPaliw) {
@@ -14,13 +15,13 @@ public class Klient extends Thread {
         this.idKlienta = idKlienta;
         this.stacjaPaliw = stacjaPaliw;
         zamowienieKlienta = new ZamowienieKlienta();
+        gen = new Random();
     }
 
     @Override
     public void run() {
         int nrStanowiska;
         try {
-            Random gen = new Random();
             stacjaPaliw.wjazdKlienta( this );
             Thread.sleep(gen.nextInt(4000));
 
@@ -30,7 +31,7 @@ public class Klient extends Thread {
 
             stacjaPaliw.opuscStanowisko(nrStanowiska, this);
 
-            if(czyZatankowano) idzDoKasy();
+            if(czyZatankowano) zaplacPrzyKasie();
 
             stacjaPaliw.wyjazdKlienta( this );
 
@@ -41,13 +42,17 @@ public class Klient extends Thread {
 
     private boolean zatankuj() throws InterruptedException {
         Random gen = new Random();
-        boolean czyZatankowano = stacjaPaliw.zatankujSamochod(zamowienieKlienta, getName());
+        Thread.sleep(gen.nextInt(5000)); // czas tankowania
 
+        boolean czyZatankowano = stacjaPaliw.zatankujSamochod(zamowienieKlienta, getName());
         return czyZatankowano;
     }
 
-    private void idzDoKasy() throws InterruptedException {
-        stacjaPaliw.zaplacPrzyKasie(this);
+    private void zaplacPrzyKasie() throws InterruptedException {
+        stacjaPaliw.stanWKolejceDoKasy(this);
+        int nrKasy = stacjaPaliw.zajmijKase(this);
+        Thread.sleep(gen.nextInt(5000));    // czas zaplaty
+        stacjaPaliw.zwolnijKase(nrKasy, this);
     }
 
 

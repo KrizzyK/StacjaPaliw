@@ -116,12 +116,12 @@ public class Main extends Application {
         listaAutNaStacji = FXCollections.observableArrayList();
         ListView<StackPane> widokAutNaStacji = new ListView<>(listaAutNaStacji);
         widokAutNaStacji.setPadding(new Insets(0,75, 0, 10));
-        widokAutNaStacji.setMinWidth(200);
+        widokAutNaStacji.setMinWidth(50);
 
         listaAutPrzedKasa = FXCollections.observableArrayList();
         ListView<StackPane> widokAutPrzedKasa = new ListView<>(listaAutPrzedKasa);
         widokAutPrzedKasa.setPadding(new Insets(0,75, 0, 75));
-        widokAutPrzedKasa.setMinWidth(200);
+        widokAutPrzedKasa.setMinWidth(50);
 
 
 
