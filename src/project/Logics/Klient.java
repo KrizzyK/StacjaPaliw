@@ -31,6 +31,7 @@ public class Klient extends Thread {
 
             stacjaPaliw.opuscStanowisko(nrStanowiska, this);
 
+
             if(czyZatankowano) zaplacPrzyKasie();
 
             stacjaPaliw.wyjazdKlienta( this );
@@ -49,7 +50,6 @@ public class Klient extends Thread {
     }
 
     private void zaplacPrzyKasie() throws InterruptedException {
-        stacjaPaliw.stanWKolejceDoKasy(this);
         int nrKasy = stacjaPaliw.zajmijKase(this);
         Thread.sleep(gen.nextInt(5000));    // czas zaplaty
         stacjaPaliw.zwolnijKase(nrKasy, this);

@@ -34,7 +34,7 @@ public class StacjaPaliw {
         iloscPaliwNaStacji.put(RodzajPaliwa.benzyna95, 100);
         iloscPaliwNaStacji.put(RodzajPaliwa.benzyna98, 100);
         iloscPaliwNaStacji.put(RodzajPaliwa.verva98, 100);
-        iloscPaliwNaStacji.put(RodzajPaliwa.ekoDieselUltra, 100);
+        iloscPaliwNaStacji.put(RodzajPaliwa.EkoDieselUltra, 100);
         iloscPaliwNaStacji.put(RodzajPaliwa.EkoDieselUltra2, 100);
         iloscPaliwNaStacji.put(RodzajPaliwa.vervaOn, 100);
     }
@@ -65,7 +65,6 @@ public class StacjaPaliw {
             czyStanowiskoWolne[i] = true;
         }
     }
-
 
     public void zamknijStacje(){
         wjazdNaStacjeLock.lock();
@@ -160,17 +159,19 @@ public class StacjaPaliw {
 
 
 
-    public void opuscStanowisko(int nrStanowiska, Klient klient) {
+    public void opuscStanowisko(int nrStanowiska, Klient klient) throws InterruptedException {
         stanowiskaLock.lock();
 
         czyStanowiskoWolne[nrStanowiska] = true;
-        Platform.runLater( () ->  guiClass.ukryjSamochodNaStanowisku(nrStanowiska) );
-
+        Platform.runLater( () -> {
+            guiClass.ukryjSamochodNaStanowisku(nrStanowiska);
+            //System.out.println("Siema1");
+        });
 
         czyZwolnionoStanowisko[nrStanowiska].signal();
-//        Platform.runLater( () -> {
-//            guiClass.pokazSamochodPrzedKasa(klient.getIdKlienta());
-//        });
+        Platform.runLater( () -> {
+            guiClass.pokazSamochodPrzedKasa(klient.getIdKlienta());
+        });
 
         stanowiskaLock.unlock();
     }
@@ -178,6 +179,11 @@ public class StacjaPaliw {
     public int zajmijKase(Klient klient) throws InterruptedException {
         kasyLock.lock();
         int nrKasy = znajdzKase();
+
+//        Platform.runLater( () -> {
+//            guiClass.pokazSamochodPrzedKasa(klient.getIdKlienta());
+//        });
+
         while(czyKasaWolna[nrKasy] == false)
             czyZwolnionoKase[nrKasy].await();
 
@@ -222,7 +228,6 @@ public class StacjaPaliw {
         for (int i = 0; i < czyKasaWolna.length; i++) {
             if(czyKasaWolna[i]) return i;
         }
-        System.out.println("Wybieram random");
         Random generator = new Random();
         return generator.nextInt( czyKasaWolna.length );
     }
@@ -253,10 +258,7 @@ public class StacjaPaliw {
         if(b) return "1";
         return  "0";
     }
-
-    public void stanWKolejceDoKasy(Klient klient) {
-        Platform.runLater( () -> {
-            guiClass.pokazSamochodPrzedKasa(klient.getIdKlienta());
-        } );
+    public Stanowisko[] getStanowiska() {
+        return stanowiska;
     }
 }

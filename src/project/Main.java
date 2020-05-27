@@ -20,6 +20,8 @@ import project.Logics.Klient;
 import project.Logics.StacjaPaliw;
 import project.Logics.Stanowisko;
 
+import java.util.Arrays;
+
 public class Main extends Application {
     static final int szerokoscOkna = 1600, wysokoscOkna = 900;
     static final int szerokoscAuta = 10, wysokoscAuta = 5;
@@ -115,12 +117,12 @@ public class Main extends Application {
     public HBox getStationLayout(int liczbaStanowisk, int liczbaKas, int maxLiczbaSamochodow) {
         listaAutNaStacji = FXCollections.observableArrayList();
         ListView<StackPane> widokAutNaStacji = new ListView<>(listaAutNaStacji);
-        widokAutNaStacji.setPadding(new Insets(0,75, 0, 10));
+        widokAutNaStacji.setPadding(new Insets(0,10, 0, 10));
         widokAutNaStacji.setMinWidth(50);
 
         listaAutPrzedKasa = FXCollections.observableArrayList();
         ListView<StackPane> widokAutPrzedKasa = new ListView<>(listaAutPrzedKasa);
-        widokAutPrzedKasa.setPadding(new Insets(0,75, 0, 75));
+        widokAutPrzedKasa.setPadding(new Insets(0,10, 0, 10));
         widokAutPrzedKasa.setMinWidth(50);
 
 
@@ -142,8 +144,9 @@ public class Main extends Application {
             widokAutaNaStanowisku[i] = new ImageView( obrazAuta );
 
             samochodyNaStanowiskach[i] = new StackPane( widokAutaNaStanowisku[i] );
-            samochodyNaStanowiskach[i].getChildren().add(new Text(Integer.toString(i)));
+            samochodyNaStanowiskach[i].getChildren().add(new Text(""));
             samochodyNaStanowiskach[i].setPadding( carInsets );
+            samochodyNaStanowiskach[i].setVisible(false);
 
             stanowiskaZAutem[i] = new VBox(widokStanowiskaZDanymi[i], samochodyNaStanowiskach[i]);
             stanowiskaZAutem[i].setPadding( carInsets );
@@ -169,8 +172,9 @@ public class Main extends Application {
             widokAutaPrzyKasie[i] = new ImageView( obrazAuta );
 
             samochodyPrzyKasach[i] = new StackPane( widokAutaPrzyKasie[i] );
-            samochodyPrzyKasach[i].getChildren().add(new Text(Integer.toString(i)));
+            samochodyPrzyKasach[i].getChildren().add(new Text(""));
             samochodyPrzyKasach[i].setPadding( carInsets );
+            samochodyPrzyKasach[i].setVisible(false);
 
             kasyZAutem[i] = new VBox(widokKasy[i], samochodyPrzyKasach[i]);
             kasyZAutem[i].setPadding( carInsets );
@@ -247,9 +251,11 @@ public class Main extends Application {
                 iloscKas = Integer.parseInt(iloscKasField.getText());
                 maxIloscSamochodow = Integer.parseInt(maxIloscSamochodowField.getText());
                 layout.setCenter( getStationLayout(iloscStanowisk, iloscKas, maxIloscSamochodow) );
+
                 // rozpocznij symulacje
 
                 stacjaPaliw = new StacjaPaliw(maxIloscSamochodow, iloscStanowisk, iloscKas, this);
+                dodajDaneDoStanowisk(stacjaPaliw.getStanowiska()); //////////////////////////////////////
 
                 Thread[] klienci = new Klient[20];
 
@@ -278,9 +284,9 @@ public class Main extends Application {
         }
     }
     public void dodajDaneDoStanowisk(Stanowisko[] stanowiska) {
-        // wyciagnij dane i wstaw
         for (int i = 0; i < iloscStanowisk ; i++) {
-            widokStanowiskaZDanymi[i].getChildren().add( new Text("napisNaStanowisku") );
+            System.out.println(stanowiska[i].getNapisNaStanowisku());
+            widokStanowiskaZDanymi[i].getChildren().add( new Text(stanowiska[i].getNapisNaStanowisku() ) );
         }
     }
 }
