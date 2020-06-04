@@ -24,6 +24,6 @@ public class ZamowienieKlienta {
 
     @Override
     public String toString() {
-        return "Zamowienie=" + rodzajPaliwa.name() + " " + ileLitrow + "}";
+        return "Zamowienie=" + rodzajPaliwa.name() + " " + ileLitrow + " ";
     }
 }

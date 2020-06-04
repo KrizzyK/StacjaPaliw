@@ -41,7 +41,7 @@ public class StacjaPaliw {
 
 
     private int maxKlientow;
-    private int iloscKlientow = 0;
+    private volatile int iloscKlientow = 0;
 
     public StacjaPaliw(int maxKlientow, int liczbaStanowisk, int liczbaKas, Main guiClass) {
         this.guiClass = guiClass;
@@ -53,7 +53,6 @@ public class StacjaPaliw {
             czyKasaWolna[i] = true;
             czyZwolnionoKase[i] = kasyLock.newCondition();
         }
-
 
         stanowiska = new Stanowisko[liczbaStanowisk];
         czyZwolnionoStanowisko = new Condition[liczbaStanowisk];
@@ -75,7 +74,8 @@ public class StacjaPaliw {
     }
     public void otworzStacje() {
         wjazdNaStacjeLock.lock();
-        guiClass.listaKomunikatow.add(0,"Otwieram stacje.");
+
+        Platform.runLater( () -> guiClass.listaKomunikatow.add(0,"Otwieram stacje.") );
 
         czyOtwarta = true;
         czyOtworzyliStacje.signalAll();
@@ -86,8 +86,8 @@ public class StacjaPaliw {
         wjazdNaStacjeLock.lock();
         while(maxKlientow == iloscKlientow) czyJestMiejsceNaStacji.await();
         while(czyOtwarta == false ) czyOtworzyliStacje.await();
-
         iloscKlientow++;
+
         int iloscKl = iloscKlientow;
         Platform.runLater( () -> {
             guiClass.listaKomunikatow.add(0,"Wchodzi: " +  klient.getName() + ". Ilosc klientow w srodku: " + iloscKl);
@@ -98,21 +98,20 @@ public class StacjaPaliw {
     }
     public void wyjazdKlienta(Klient klient) {
         wjazdNaStacjeLock.lock();
-
         iloscKlientow--;
+
         Platform.runLater( () -> {
                     guiClass.listaKomunikatow.add(0,"Wychodzi: " +  klient.getName() + ". Ilosc klientow w srodku: " + iloscKlientow);
                 } );
 
 
         czyJestMiejsceNaStacji.signal();
-
         wjazdNaStacjeLock.unlock();
     }
-
-    public void dostawaPaliwa(RodzajPaliwa rodzajPaliwa, int ileLitrow) {
-        iloscPaliwNaStacji.put(rodzajPaliwa, iloscPaliwNaStacji.get(rodzajPaliwa) + ileLitrow );
+    public void dostawaPaliw(int ileLitrow) {
+        iloscPaliwNaStacji.forEach( (k,v) -> iloscPaliwNaStacji.put(k, v + ileLitrow ) );
     }
+
     // jesli nie ma ani troche paliwa -> odjedz bez zaplaty
     // jesli jest ale nie wystarczajaco -> zatankuj ile mozesz i zaplac
     // jesli jest wystarczajaco -> wszystko gra
@@ -124,11 +123,11 @@ public class StacjaPaliw {
         int paliwaNaStacji = iloscPaliwNaStacji.get(rodzajPaliwa);
         if(paliwaNaStacji == 0)  {
             Platform.runLater( () -> guiClass.listaKomunikatow.add(0,klient + " nie zatankowal - brak paliwa. Opuszczanie stacji bez zaplaty") );
-            return  false; // brak tego paliwa
+            return false; // brak tego paliwa
         }
 
         int ileZostanieNaStacji = paliwaNaStacji - ileLitrow;
-        if(ileZostanieNaStacji < 0 ) { // niewystarczajaca ilosc paliwa
+        if(ileZostanieNaStacji < 0 ) { // klient tankuje resztke paliwa
             iloscPaliwNaStacji.put(rodzajPaliwa, 0 );
             return true;
         }
@@ -157,21 +156,17 @@ public class StacjaPaliw {
     }
 
 
-
-
     public void opuscStanowisko(int nrStanowiska, Klient klient) throws InterruptedException {
         stanowiskaLock.lock();
-
         czyStanowiskoWolne[nrStanowiska] = true;
+
         Platform.runLater( () -> {
+            guiClass.updateStanPaliw( stanPaliwaNaStacji() );
             guiClass.ukryjSamochodNaStanowisku(nrStanowiska);
-            //System.out.println("Siema1");
         });
 
         czyZwolnionoStanowisko[nrStanowiska].signal();
-        Platform.runLater( () -> {
-            guiClass.pokazSamochodPrzedKasa(klient.getIdKlienta());
-        });
+
 
         stanowiskaLock.unlock();
     }
@@ -180,9 +175,9 @@ public class StacjaPaliw {
         kasyLock.lock();
         int nrKasy = znajdzKase();
 
-//        Platform.runLater( () -> {
-//            guiClass.pokazSamochodPrzedKasa(klient.getIdKlienta());
-//        });
+        Platform.runLater( () -> {
+            guiClass.pokazSamochodPrzedKasa(klient.getIdKlienta());
+        });
 
         while(czyKasaWolna[nrKasy] == false)
             czyZwolnionoKase[nrKasy].await();
@@ -235,22 +230,6 @@ public class StacjaPaliw {
     public String stanPaliwaNaStacji() {
         String str = "[";
         for (Map.Entry<RodzajPaliwa, Integer> entry : iloscPaliwNaStacji.entrySet()) str = str.concat( entry.getValue().toString() +", " );
-        str = str.concat("]");
-        return str;
-    }
-    public String stanStanowisk() {
-        String str = "[";
-        for (int i = 0; i < czyStanowiskoWolne.length; i++) {
-            str = str.concat(boolToInt(czyStanowiskoWolne[i]) + ", ");
-        }
-        str = str.concat("]");
-        return str;
-    }
-    public String stanKas() {
-        String str = "[";
-        for (int i = 0; i < czyKasaWolna.length; i++) {
-            str = str.concat( boolToInt(czyKasaWolna[i]) + ", " );
-        }
         str = str.concat("]");
         return str;
     }

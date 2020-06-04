@@ -30,7 +30,6 @@ public enum RodzajPaliwa {
     }
 
     public String getShortString() {
-        System.out.println("Siem");
         switch(this) {
             case verva98: return "v98";
             case vervaOn: return "vOn";
@@ -39,7 +38,6 @@ public enum RodzajPaliwa {
             case EkoDieselUltra2: return "ED2";
             case benzyna95: return "b96";
         }
-        System.out.println("Sieee");
         return "";
     }
 

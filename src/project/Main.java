@@ -20,23 +20,27 @@ import project.Logics.Klient;
 import project.Logics.StacjaPaliw;
 import project.Logics.Stanowisko;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main extends Application {
     static final int szerokoscOkna = 1600, wysokoscOkna = 900;
-    static final int szerokoscAuta = 10, wysokoscAuta = 5;
 
     StackPane[] samochodyNaStacji;          // zmienne pokazujace samochody w odpowiednich miejscach z odpowiednimi indeksami
     StackPane[] samochodyNaStanowiskach;    // methods -> x[i].setVisible(),
-    StackPane[] samochodyPrzedKasa;         // ((Text) x[1].getChildren().get(1) ).setText("xdxd");
+    StackPane[] samochodyPrzedKasa;         // ((Text) x[1].getChildren().get(1) ).setText("...");
     StackPane[] samochodyPrzyKasach;
-
     StackPane[] widokStanowiskaZDanymi;
 
     int iloscStanowisk;
     int iloscKas;
     int maxIloscSamochodow;
+    int iloscKlientowSymulacji;
     BorderPane layout = new BorderPane();
+    Button otworzStacjePrzycisk, zamknijStacjePrzycisk;
+    Button dostawaPaliwaPrzycisk;
+    Button rozpocznijSymulacjePrzycsik;
+    Text stanPaliw;
 
     public ObservableList<String> listaKomunikatow;
     public ObservableList<StackPane> listaAutNaStacji;
@@ -44,6 +48,11 @@ public class Main extends Application {
 
     public static StacjaPaliw stacjaPaliw;
     Image obrazAuta;
+
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 
     @Override
     public void start(Stage window) throws Exception{
@@ -57,6 +66,21 @@ public class Main extends Application {
         window.setScene(new Scene(layout, szerokoscOkna, wysokoscOkna));
         window.show();
 
+    }
+
+    private void rozpocznijSymulacje(int maxIloscSamochodow, int iloscStanowisk, int iloscKas) {
+        stacjaPaliw = new StacjaPaliw(maxIloscSamochodow, iloscStanowisk, iloscKas, this);
+        dodajDaneDoStanowisk(stacjaPaliw.getStanowiska());
+        updateStanPaliw( stacjaPaliw.stanPaliwaNaStacji() );
+        zamknijStacjePrzycisk.setDisable(false);
+
+        List<Thread> klienci = new ArrayList<>();
+        for(int i = 0; i < iloscKlientowSymulacji; i++) {
+            klienci.add(i, new Klient(i+1, stacjaPaliw) );
+            klienci.get(i).start();
+        }
+
+        rozpocznijSymulacjePrzycsik.setDisable(true);
     }
 
     public void pokazSamochodNaStacji(int nrKlienta) {
@@ -93,9 +117,6 @@ public class Main extends Application {
         samochodyPrzyKasach[indeksMiejsca].setVisible(false);
     }
 
-    public static void main(String[] args) {
-        launch(args);
-    }
 
 
     public VBox getRightMenuLayout() {
@@ -201,7 +222,7 @@ public class Main extends Application {
         hbox.setStyle("-fx-background-color: #336699;");
 
         // przyciski i ich akcje
-        Button otworzStacjePrzycisk, zamknijStacjePrzycisk;
+
 
         otworzStacjePrzycisk = new Button("Otworz Stacje");
         otworzStacjePrzycisk.setPrefSize(100, 20);
@@ -209,67 +230,75 @@ public class Main extends Application {
 
         zamknijStacjePrzycisk = new Button("Zamknij Stacje");
         zamknijStacjePrzycisk.setPrefSize(100, 20);
+        zamknijStacjePrzycisk.setDisable(true);
 
         otworzStacjePrzycisk.setOnAction(e -> {
             otworzStacjePrzycisk.setDisable(true);
             zamknijStacjePrzycisk.setDisable(false);
-            //stacjaPaliw.otworzStacje();
+            dostawaPaliwaPrzycisk.setDisable(true);
+            stacjaPaliw.otworzStacje();
         });
         zamknijStacjePrzycisk.setOnAction(e -> {
             zamknijStacjePrzycisk.setDisable(true);
             otworzStacjePrzycisk.setDisable(false);
-            //stacjaPaliw.zamknijStacje();
+            dostawaPaliwaPrzycisk.setDisable(false);
+            stacjaPaliw.zamknijStacje();
         });
-        // napisy i inne...
+        dostawaPaliwaPrzycisk = new Button("Dostawa paliwa");
+        zamknijStacjePrzycisk.setPrefSize(100, 20);
+        dostawaPaliwaPrzycisk.setDisable(true);
+        dostawaPaliwaPrzycisk.setOnAction(e -> {
+            stacjaPaliw.dostawaPaliw(10);
+            updateStanPaliw( stacjaPaliw.stanPaliwaNaStacji() );
+        });
+
+        stanPaliw = new Text("Stan paliw na stacji: [0,0,0,0,0,0]");
 
 
-
-        hbox.getChildren().addAll(otworzStacjePrzycisk, zamknijStacjePrzycisk);
+        hbox.getChildren().addAll(otworzStacjePrzycisk, zamknijStacjePrzycisk, dostawaPaliwaPrzycisk, stanPaliw);
         return hbox;
     }
     public VBox getBottomMenuLayout() {
         // 1 row
         Text text1 = new Text("Ilosc stanowisk: ");
-        TextField iloscStanowiskField = new TextField("4");
+        TextField iloscStanowiskField = new TextField("6");
         HBox hBox1 = new HBox(text1, iloscStanowiskField);
         // 2 row
         Text text2 = new Text("Ilosc kas: ");
-        TextField iloscKasField = new TextField("3");
+        TextField iloscKasField = new TextField("4");
         HBox hBox2 = new HBox(text2, iloscKasField);
         // 3 row
         Text text3 = new Text("Maksymalna ilosc samochodow: ");
         TextField maxIloscSamochodowField = new TextField("15");
         HBox hBox3 = new HBox(text3, maxIloscSamochodowField);
+        // 4 row
+        Text text4 = new Text("Ilosc klientow w symulacji");
+        TextField iloscKlientowSymulacjiField = new TextField("200");
+        HBox hBox4 = new HBox(text4, iloscKlientowSymulacjiField);
 
         Text komunikat = new Text();
 
-        Button rozpocznijSym = new Button("Rozpocznij symulacje");
-        rozpocznijSym.setOnAction( event ->  {
-            if(checkIfInteger( iloscStanowiskField ) && checkIfInteger( iloscKasField ) && checkIfInteger( maxIloscSamochodowField )) {
+        rozpocznijSymulacjePrzycsik = new Button("Rozpocznij symulacje");
+        rozpocznijSymulacjePrzycsik.setOnAction(event ->  {
+            if(checkIfInteger( iloscStanowiskField ) && checkIfInteger( iloscKasField )
+                    && checkIfInteger( maxIloscSamochodowField ) && checkIfInteger( iloscKlientowSymulacjiField)) {
+
                 komunikat.setText("");
                 iloscStanowisk = Integer.parseInt(iloscStanowiskField.getText());
                 iloscKas = Integer.parseInt(iloscKasField.getText());
                 maxIloscSamochodow = Integer.parseInt(maxIloscSamochodowField.getText());
+                iloscKlientowSymulacji = Integer.parseInt(iloscKlientowSymulacjiField.getText());
                 layout.setCenter( getStationLayout(iloscStanowisk, iloscKas, maxIloscSamochodow) );
 
                 // rozpocznij symulacje
+                rozpocznijSymulacje(maxIloscSamochodow, iloscStanowisk, iloscKas);
 
-                stacjaPaliw = new StacjaPaliw(maxIloscSamochodow, iloscStanowisk, iloscKas, this);
-                dodajDaneDoStanowisk(stacjaPaliw.getStanowiska()); //////////////////////////////////////
 
-                Thread[] klienci = new Klient[20];
-
-                for (int i = 0; i < klienci.length; i++) {
-                    klienci[i] = new Klient(i+1, stacjaPaliw);
-                    klienci[i].start();
-                }
-
-                rozpocznijSym.setDisable(true);
             } else {
                 komunikat.setText("Zle dane!");
             }
         });
-        VBox vBox = new VBox(hBox1, hBox2, hBox3, rozpocznijSym, komunikat);
+        VBox vBox = new VBox(hBox1, hBox2, hBox3, hBox4, rozpocznijSymulacjePrzycsik, komunikat);
         return vBox;
 
 
@@ -285,8 +314,10 @@ public class Main extends Application {
     }
     public void dodajDaneDoStanowisk(Stanowisko[] stanowiska) {
         for (int i = 0; i < iloscStanowisk ; i++) {
-            System.out.println(stanowiska[i].getNapisNaStanowisku());
             widokStanowiskaZDanymi[i].getChildren().add( new Text(stanowiska[i].getNapisNaStanowisku() ) );
         }
+    }
+    public void updateStanPaliw(String stanPaliwString ){
+        stanPaliw.setText( "Stan paliw na stacji: " + stanPaliwString );
     }
 }

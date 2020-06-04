@@ -27,12 +27,21 @@ public class Klient extends Thread {
 
             nrStanowiska = stacjaPaliw.zajmijStanowisko( zamowienieKlienta.getRodzajPaliwa(), this );
 
-            boolean czyZatankowano = zatankuj();
+            boolean czyZatankowano = stacjaPaliw.zatankujSamochod(zamowienieKlienta, getName());
+
+            if(czyZatankowano) { // jesli bylo co tankowac
+                Thread.sleep(gen.nextInt(4000)+ 1000); // czas tankowania
+            }
 
             stacjaPaliw.opuscStanowisko(nrStanowiska, this);
 
+            if(czyZatankowano) {
+                int nrKasy = stacjaPaliw.zajmijKase(this);
 
-            if(czyZatankowano) zaplacPrzyKasie();
+                Thread.sleep(gen.nextInt(5000));    // czas zaplaty
+
+                stacjaPaliw.zwolnijKase(nrKasy, this);
+            }
 
             stacjaPaliw.wyjazdKlienta( this );
 
@@ -40,21 +49,6 @@ public class Klient extends Thread {
             e.printStackTrace();
         }
     }
-
-    private boolean zatankuj() throws InterruptedException {
-        Random gen = new Random();
-        Thread.sleep(gen.nextInt(5000)); // czas tankowania
-
-        boolean czyZatankowano = stacjaPaliw.zatankujSamochod(zamowienieKlienta, getName());
-        return czyZatankowano;
-    }
-
-    private void zaplacPrzyKasie() throws InterruptedException {
-        int nrKasy = stacjaPaliw.zajmijKase(this);
-        Thread.sleep(gen.nextInt(5000));    // czas zaplaty
-        stacjaPaliw.zwolnijKase(nrKasy, this);
-    }
-
 
     public int getIdKlienta() {
         return idKlienta;
