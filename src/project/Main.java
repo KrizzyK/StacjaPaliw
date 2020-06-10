@@ -22,6 +22,7 @@ import project.Logics.Stanowisko;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class Main extends Application {
     static final int szerokoscOkna = 1600, wysokoscOkna = 900;
@@ -305,12 +306,11 @@ public class Main extends Application {
     }
 
     public boolean checkIfInteger(TextField input) {
-        try {
-            int inputInt = Integer.parseInt(input.getText());
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
+        Pattern pattern = Pattern.compile("-?\\d+(\\.\\d+)?");
+        String text = input.getText();
+
+        return pattern.matcher(text).matches();
+
     }
     public void dodajDaneDoStanowisk(Stanowisko[] stanowiska) {
         for (int i = 0; i < iloscStanowisk ; i++) {
